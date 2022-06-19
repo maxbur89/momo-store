@@ -1,0 +1,39 @@
+backend:
+  image:
+    repository: gitlab.praktikum-services.ru:5050/00_burunov_m/momo-store/momo-store-backend
+    tag: latest
+  replicas: 1
+  service:
+    port: 8081
+    targetPort: 8081
+  revisionHistoryLimit: 15
+  imagePullPolicy: Always
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+frontend:
+  image:
+    repository: gitlab.praktikum-services.ru:5050/00_burunov_m/momo-store/momo-store-frontend
+    tag: latest
+  replicas: 1
+  service:
+    port: 80
+    targetPort: 80
+  revisionHistoryLimit: 15
+  imagePullPolicy: Always
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  env:
+    url: VUE_APP_API_URL
+    value1: "https://momo-store.digibi.ru"
+    mode: NODE_ENV
+    value2: "production"
+  fqdn: momo-store.digibi.ru
+  ingress:
+    port: 80

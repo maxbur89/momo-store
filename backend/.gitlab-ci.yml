@@ -1,0 +1,82 @@
+stages:
+    - lint
+    - build
+    - test
+    - release
+
+include:
+    - template: Security/SAST.gitlab-ci.yml
+    - project: 'templates/ci'
+      file: 'DockerInDockerTemplate.yml'
+
+hadolint_dockerfile:
+  stage: lint
+  image: hadolint/hadolint:v2.10.0-alpine
+  services:
+      - docker:dind
+  script:
+      - hadolint --ignore DL3000 --ignore DL3045 --ignore SC2059 --ignore DL3025 backend/Dockerfile
+
+build-code-job:
+    stage: build
+    image: docker:stable-dind
+    services:
+      - docker:dind
+    before_script:
+      - until docker info; do sleep 1; done
+      - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} ${CI_REGISTRY}
+    script:
+      - cd backend
+      - docker build --cache-from ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:latest --build-arg APP_VERSION=${VERSION} -t ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:${CI_COMMIT_SHORT_SHA} .
+      - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:${CI_COMMIT_SHORT_SHA}
+
+sast:
+  stage: test
+  variables:
+    SAST_DEFAULT_ANALYZERS: eslint,semgrep,spotbugs
+    SAST_EXCLUDED_ANALYZERS: "nodejs-scan"
+
+sonarqube-check-backend:
+    stage: test
+    image:
+      name: sonarsource/sonar-scanner-cli:latest
+      entrypoint: [""]
+    variables:
+      SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+      GIT_DEPTH: "0"
+    cache:
+      key: "${CI_JOB_NAME}"
+      paths:
+        - .sonar/cache
+    script:
+      - echo "SonarQube test backend for ${CI_PROJECT_DIR}"
+      - sonar-scanner
+        -Dsonar.qualitygate.wait=true
+        -Dsonar.projectKey=${SONAR_PROJECTKEY_BACKEND}
+        -Dsonar.sources=.
+        -Dsonar.host.url=${SONAR_HOST_URL}
+        -Dsonar.login=${SONAR_LOGIN}
+        -Dsonar.projectBaseDir="${CI_PROJECT_DIR}"/backend
+        -Dsonar.java.binaries=**/*
+        -Dsonar.language=java
+    allow_failure: true
+    only:
+      - merge_requests
+      - master
+      - develop
+
+upload-release:
+    stage: release
+    image: docker:stable-dind
+    services:
+      - docker:dind
+    before_script:
+      - until docker info; do sleep 1; done
+      - docker login -u gitlab-ci-token -p ${CI_JOB_TOKEN} ${CI_REGISTRY}
+    script:
+      - docker pull ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:${CI_COMMIT_SHORT_SHA}
+      - docker tag ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:${CI_COMMIT_SHORT_SHA}
+                   ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:latest
+      - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:latest
+    after_script:
+      - docker logout ${CI_REGISTRY}
