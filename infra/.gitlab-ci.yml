@@ -1,0 +1,21 @@
+stages:
+    - build
+    - release
+
+build-code-job:
+    stage: build
+    image: docker:stable-dind
+    services:
+      - docker:dind
+    script:
+      - cd infra
+
+upload-release:
+    stage: release
+    image: docker:stable-dind
+    services:
+      - docker:dind
+    variables:
+
+    script:
+      - cd infra

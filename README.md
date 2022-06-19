@@ -13,5 +13,13 @@ NODE_ENV=production VUE_APP_API_URL=http://localhost:8081 npm run serve
 
 ```bash
 go run ./cmd/api
-go test -v ./... 
+go test -v ./...
+```
+
+## Deploy
+
+```bash
+helm package momo-store-chart/
+helm delete momo-store
+helm upgrade --install momo-store ./momo-store-0.1.1.tgz --namespace betta-maksim-burunov
 ```

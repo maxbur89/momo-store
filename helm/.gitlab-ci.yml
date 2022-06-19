@@ -1,0 +1,58 @@
+stages:
+    - release
+    - deploy
+
+upload-release:
+    stage: release
+    image: alpine/helm:3.9.0
+    services:
+      - docker:dind
+    variables:
+      PKG_CHANNEL: stable
+      PKG_NAME: momo-store-0.1.1.tgz
+      CHART_NAME: momo-store
+    before_script:
+      # Плагин для cm-push
+      - helm plugin install https://github.com/chartmuseum/helm-push
+    script:
+      # Создание helm пакета
+      - helm package helm/
+      # Добавление репозитория
+      - helm repo add --username gitlab-ci-token --password $CI_JOB_TOKEN ${CHART_NAME} ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/${PKG_CHANNEL}
+      # Загрузка в репозиторий
+      - helm cm-push ./${PKG_NAME} ${CHART_NAME}
+
+deploy:
+    stage: deploy
+    image: alpine/helm:3.9.0
+    services:
+      - docker:dind
+    variables:
+      PKG_CHANNEL: stable
+      PKG_NAME: momo-store-0.1.1.tgz
+      CHART_NAME: momo-store
+    before_script:
+      - helm plugin install https://github.com/chartmuseum/helm-push
+      # Установка кредов для k8s
+      - mkdir -p ~/.kube
+      - chmod 700 ~/.kube
+      - touch ~/.kube/config
+      - cat "$KUBECONFIG" > ~/.kube/config
+      - chmod 600 ~/.kube/config
+      # Установка кредов для yandex yc
+      - mkdir -p ~/.config
+      - chmod 700 ~/.config
+      - mkdir -p ~/.config/yandex-cloud
+      - chmod 700 ~/.config/yandex-cloud
+      - touch ~/.config/yandex-cloud/config.yaml
+      - cat "$YACONFIG" > ~/.config/yandex-cloud/config.yaml
+      - chmod 600 ~/.config/yandex-cloud/config.yaml
+      # Установка утилиты yc
+      - apk add curl bash
+      - curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash -s -- -a
+      - export PATH=$PATH:/root/yandex-cloud/bin/
+    script:
+      - helm repo add --username gitlab-ci-token --password $CI_JOB_TOKEN ${CHART_NAME} ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/${PKG_CHANNEL}
+      - helm repo update
+      - helm search repo momo
+      - helm upgrade --install ${CHART_NAME} ${CHART_NAME}/${CHART_NAME}

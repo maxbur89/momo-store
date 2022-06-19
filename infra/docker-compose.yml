@@ -1,0 +1,9 @@
+minio:
+    image: minio/minio
+    hostname: minio
+    container_name: minio
+    command: server /data
+    volumes:
+      - /opt/minio:/data
+    ports:
+      - 9000:9000
