@@ -29,6 +29,7 @@ spec:
     metadata:
       labels:
         app: "{{ .Chart.Name }}"
+      annotations: {{ include "momo-store.annotations.k8s" . | indent 8 }}
     spec:
       containers:
         - name: backend

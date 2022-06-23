@@ -1,21 +1,10 @@
 stages:
-    - build
-    - release
+    - deploy
 
 build-code-job:
-    stage: build
+    stage: deploy
     image: docker:stable-dind
     services:
       - docker:dind
     script:
-      - cd infra
-
-upload-release:
-    stage: release
-    image: docker:stable-dind
-    services:
-      - docker:dind
-    variables:
-
-    script:
-      - cd infra
+      - cd infra/terraform

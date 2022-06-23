@@ -30,6 +30,15 @@ build-code-job:
       - docker build --cache-from ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:latest --build-arg APP_VERSION=${VERSION} -t ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:${CI_COMMIT_SHORT_SHA} .
       - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}/${CI_PROJECT_NAME}-backend:${CI_COMMIT_SHORT_SHA}
 
+go_test:
+  stage: test
+  image: golang:1.18.3-alpine3.16
+  services:
+      - docker:dind
+  script:
+    - cd backend/
+    - CGO_ENABLED=0 go test -v ./...
+
 sast:
   stage: test
   variables:

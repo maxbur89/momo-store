@@ -7,7 +7,7 @@ RUN apk add --no-cache npm==8.10.0-r0 \
 COPY . .
 
 ENV NODE_ENV=production
-ENV VUE_APP_API_URL=https://00-burunov-m.k8s.praktikum-services.tech
+ENV VUE_APP_API_URL=https://momo-store.digibi.ru
 
 RUN npm run build
 

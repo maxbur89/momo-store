@@ -34,6 +34,10 @@ frontend:
     value1: "https://momo-store.digibi.ru"
     mode: NODE_ENV
     value2: "production"
-  fqdn: momo-store.digibi.ru
-  ingress:
-    port: 80
+  fqdn_momo: momo-store.digibi.ru
+  fqdn_prometheus: prometheus.digibi.ru
+  fqdn_grafana: grafana.digibi.ru
+  port_backend: 8081
+  port_frontend: 80
+  port_grafana: 3000
+  port_prometheus: 80
