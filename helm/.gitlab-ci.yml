@@ -9,18 +9,22 @@ upload-release:
       - docker:dind
     variables:
       PKG_CHANNEL: stable
-      PKG_NAME: momo-store-0.1.1.tgz
+      PKG_NAME: momo-store
+      PKG_VERSION: 1.1.3
       CHART_NAME: momo-store
     before_script:
       # Плагин для cm-push
       - helm plugin install https://github.com/chartmuseum/helm-push
     script:
       # Создание helm пакета
-      - helm package helm/
+      - helm package helm/ --version ${PKG_VERSION}
       # Добавление репозитория
       - helm repo add --username gitlab-ci-token --password $CI_JOB_TOKEN ${CHART_NAME} ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/${PKG_CHANNEL}
+      - echo ${CI_PROJECT_ID}
+      - echo ${CI_API_V4_URL}
       # Загрузка в репозиторий
-      - helm cm-push ./${PKG_NAME} ${CHART_NAME}
+      - helm cm-push ./${PKG_NAME}-${PKG_VERSION}.tgz ${CHART_NAME}
+      - helm repo update
 
 deploy:
     stage: deploy
@@ -29,7 +33,8 @@ deploy:
       - docker:dind
     variables:
       PKG_CHANNEL: stable
-      PKG_NAME: momo-store-0.1.1.tgz
+      PKG_NAME: momo-store
+      PKG_VERSION: 1.1.3
       CHART_NAME: momo-store
     before_script:
       - helm plugin install https://github.com/chartmuseum/helm-push
@@ -55,4 +60,4 @@ deploy:
       - helm repo add --username gitlab-ci-token --password $CI_JOB_TOKEN ${CHART_NAME} ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/${PKG_CHANNEL}
       - helm repo update
       - helm search repo momo
-      - helm upgrade --install ${CHART_NAME} ${CHART_NAME}/${CHART_NAME}
+      - helm upgrade --install ${CHART_NAME} ${CHART_NAME}/${CHART_NAME} --version ${PKG_VERSION}

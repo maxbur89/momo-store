@@ -3,13 +3,18 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: frontend
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
 spec:
   ingressClassName: "nginx"
   tls:
     - hosts:
-        - "{{ .Values.fqdn }}"
+        - "{{ .Values.fqdn_momo }}"
+        - "{{ .Values.fqdn_prometheus }}"
+        - "{{ .Values.fqdn_grafana }}"
+      secretName: letsencrypt
   rules:
-  - host: "{{ .Values.fqdn }}"
+  - host: "{{ .Values.fqdn_momo }}"
     http:
       paths:
       - path: /
@@ -18,25 +23,45 @@ spec:
           service:
             name: "{{ .Chart.Name }}"
             port:
-              number: 80
+              number: "{{ .Values.port_frontend }}"
       - path: /auth
         pathType: Prefix
         backend:
           service:
             name: "backend"
             port:
-              number: 8081
+              number: "{{ .Values.port_backend }}"
       - path: /products
         pathType: Prefix
         backend:
           service:
             name: "backend"
             port:
-              number: 8081
+              number: "{{ .Values.port_backtend }}"
       - path: /categories
         pathType: Prefix
         backend:
           service:
             name: "backend"
             port:
-              number: 8081
+              number: "{{ .Values.port_backend }}"
+  - host: "{{ .Values.fqdn_prometheus }}"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: "prometheus-server"
+            port:
+              number: "{{ .Values.port_prometheus }}"
+  - host: "{{ .Values.fqdn_grafana }}"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: "grafana"
+            port:
+              number: "{{ .Values.port_grafana }}"
