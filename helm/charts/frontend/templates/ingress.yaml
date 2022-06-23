@@ -23,28 +23,28 @@ spec:
           service:
             name: "{{ .Chart.Name }}"
             port:
-              number: "{{ .Values.port_frontend }}"
+              number: {{ .Values.port_frontend }}
       - path: /auth
         pathType: Prefix
         backend:
           service:
             name: "backend"
             port:
-              number: "{{ .Values.port_backend }}"
+              number: {{ .Values.port_backend }}
       - path: /products
         pathType: Prefix
         backend:
           service:
             name: "backend"
             port:
-              number: "{{ .Values.port_backtend }}"
+              number: {{ .Values.port_backend }}
       - path: /categories
         pathType: Prefix
         backend:
           service:
             name: "backend"
             port:
-              number: "{{ .Values.port_backend }}"
+              number: {{ .Values.port_backend }}
   - host: "{{ .Values.fqdn_prometheus }}"
     http:
       paths:
@@ -54,7 +54,7 @@ spec:
           service:
             name: "prometheus-server"
             port:
-              number: "{{ .Values.port_prometheus }}"
+              number: {{ .Values.port_prometheus }}
   - host: "{{ .Values.fqdn_grafana }}"
     http:
       paths:
@@ -64,4 +64,4 @@ spec:
           service:
             name: "grafana"
             port:
-              number: "{{ .Values.port_grafana }}"
+              number: {{ .Values.port_grafana }}
